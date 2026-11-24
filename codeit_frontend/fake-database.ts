@@ -1,4 +1,4 @@
-import { MemoRecordType, UserType } from "./types";
+import type { MemoRecordType, UserType } from "@/types";
 
 export const FAKE_USERS: UserType[] = [
   {
