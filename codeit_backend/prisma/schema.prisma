@@ -1,0 +1,28 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  importFileExtension = ""
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id       Int    @id
+  username String
+  memos    Memo[]
+}
+
+model Memo {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  content   String
+  imageUrl  String   @default("")
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  author    User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}

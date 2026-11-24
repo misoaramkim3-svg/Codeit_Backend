@@ -1,4 +1,5 @@
-import { z } from "zod";
+import type { z } from "zod";
+import type { createMemoSchema } from "./schemas/memo-schemas";
 
 export type UserType = {
   id: number;
@@ -20,14 +21,6 @@ export type MemoRecordType = {
   imageUrl: string;
   createdAt: string;
 };
-
-// POST /memos가 실제로 받은 JSON을 검사하는 규칙이다.
-export const createMemoSchema = z.object({
-  userId: z.number().int().positive(),
-  title: z.string().trim().min(1),
-  content: z.string().refine((value) => value.trim().length > 0),
-  imageUrl: z.string().default(""),
-});
 
 // 클라이언트가 보내기 전의 입력 타입이므로 imageUrl은 생략할 수 있다.
 export type CreateMemoRequest = z.input<typeof createMemoSchema>;
