@@ -16,16 +16,22 @@
 - 코딩, 디버깅, 설계, 코드 리뷰, 테스트, 개발 문서화 전에 `C:/Users/misoh/.codex/codex.md`를 읽고 관련 지침을 적용한다. 파일에 접근할 수 없으면 작업 결과에 알린다.
 - 이 프로젝트는 npm과 Express를 사용한다. 원본 코드는 `src/`에 둔다. `npm run dev`는 `tsx watch`로 `src/index.ts`를 실행하고 소스 변경 시 서버를 재시작한다. 기본 포트는 `3001`이다.
 - PostgreSQL 모델은 `prisma/schema.prisma`에서 정의한다. Zod 스키마는 API 요청의 형식을 검사하고, Prisma 스키마는 데이터베이스의 테이블과 관계를 정의한다.
-- 처음 실행할 때 백엔드에서 `npm ci`를 실행하고, `.env.example`을 `.env`로 복사해 `DATABASE_URL`을 지정한다. WSL의 로컬 PostgreSQL을 사용하면 예시 URL의 사용자 이름을 `whoami` 결과로 바꾼다.
-- `npm run db:generate`로 Prisma Client를 생성하고, `npm run db:migrate`로 테이블을 만든 다음 `npm run db:seed`로 실습 데이터를 넣는다. 시드는 `src/fake-database.ts`의 기존 ID를 유지하며 다시 실행해도 중복 행을 만들지 않는다.
+- 처음 실행할 때 백엔드에서 `npm ci`를 실행하고, `.env.example`을 `.env`로 복사한다. `DATABASE_URL`에 로컬 PostgreSQL 사용자 이름과 URL 인코딩한 비밀번호를 넣는다.
+- `npm run db:generate`로 Prisma Client를 생성하고, `npm run db:migrate`로 테이블을 만든 다음 `npm run db:seed`로 실습 데이터를 넣는다. 시드는 실습 사용자의 문자열 ID를 사용하며 다시 실행해도 중복 행을 만들지 않는다.
+- Better Auth의 `/api/better-auth` 경로가 가입, 로그인, 로그아웃과 세션 조회를 처리한다. 환경변수는 `BETTER_AUTH_SECRET`과 `BETTER_AUTH_URL`이다.
+- 이메일 로그인에는 가입 시 등록한 유저이름도 받는다. 쿠키 세션은 15분 동안 유효하다. 사용자, 로그인 계정, 세션, 인증 정보는 Better Auth 모델에 저장한다.
+- `POST /memos`의 `userId`는 로그인한 `BetterAuthUser.id`와 일치해야 한다. 잘못된 요청은 `400`, 세션 없음은 `401`, 작성자 불일치는 `403`, 생성 성공은 `201`이다.
+- WSL의 백엔드 폴더에서 `npm run db:studio`를 실행하고 브라우저에서 `http://localhost:5555`를 열면 PostgreSQL의 테이블과 행을 볼 수 있다.
 - `npm run typecheck`로 타입을 검사하고 `npm run build`로 TypeScript를 `dist/`에 컴파일한다. 현재 `npm test`는 자리표시자다. 서버 동작을 바꿨다면 영향받은 HTTP 응답도 확인한다.
 - `src/index.ts`에서 요청 로그, CORS, JSON 파싱을 라우터보다 먼저 등록한다. CORS는 `http://localhost:3000`에서 백엔드를 직접 호출하는 브라우저 요청을 허용한다.
-- 메모 목록·상세·생성 라우트는 `src/routes/memos-router.ts`에 정의하고, `src/index.ts`에서 `/memos` 경로에 연결한다.
+- 메모 목록·상세·생성·삭제 라우트는 `src/routes/memos-router.ts`에 정의하고, `src/index.ts`에서 `/memos` 경로에 연결한다.
 - `GET /memos`는 작성자 이름이 포함된 메모를 최대 15개씩 `{ memos, nextCursor }`로 반환한다. `cursor`를 생략하면 첫 페이지를 반환하고, 다음 페이지는 `cursor`에 이전 응답의 `nextCursor`를 전달한다.
 - API 타입은 `src/types.ts` 한 곳에서 정의한다. 프론트엔드의 `@/types`도 이 파일을 가리킨다.
+- 회원가입은 `POST /auth/signup`, 로그인은 `POST /auth/login`으로 요청한다. 새 비밀번호는 UTF-8 기준 최대 72바이트를 허용하고 `bcrypt`로 해시해 PostgreSQL에 저장한다. 기존 `scrypt` 계정은 로그인에 성공하면 72바이트 이하인 비밀번호를 bcrypt 해시로 갱신한다.
+- `POST /auth/login`은 이메일, 비밀번호, 가입 시 등록한 유저이름(`username`)을 받는다.
 - 메모 API의 `createdAt`은 UTC ISO 8601 문자열로 보낸다. 시드는 시간대 없는 실습용 날짜를 한국 시각으로 해석하고, 프론트엔드는 한국 시간으로 날짜와 시각을 표시한다.
-- `POST /memos`는 `createMemoSchema`로 JSON을 검사한다. 요청 타입 `CreateMemoRequest`는 스키마에서 추론하고, 성공 응답은 `MemoResponse`다. `imageUrl`을 생략하면 응답 값은 빈 문자열이다. 생성에 성공하면 `201`, 입력이 유효하지 않으면 `400`으로 응답한다. 생성된 메모는 PostgreSQL에 저장된다.
 - `GET /memos/:id`는 ID에 해당하는 메모와 작성자 이름(`username`)을 JSON 객체로 반환한다. 잘못된 ID는 `400`, 존재하지 않는 ID는 `404`로 응답한다.
+- `DELETE /memos/:id`는 지정한 메모 한 건을 PostgreSQL에서 삭제한다. 성공은 `204`, 잘못된 ID는 `400`, 존재하지 않는 메모는 `404`로 응답한다. 이 API는 로컬 CRUD 실습용으로 모든 메모에 적용된다. 프론트엔드와 백엔드 개발 서버는 `127.0.0.1`에 바인딩한다.
 - `npm run format`으로 포맷을 적용하고 `npm run format:check`로 포맷을 검사한다. VS Code에서 저장 시 포맷하려면 추천 Prettier 확장을 설치한다.
 - `node_modules/`, `dist/`, `src/generated/`는 생성물이다. 의존성은 npm으로 관리하고 변경 시 `package-lock.json`을 함께 갱신한다. 커밋과 푸시는 사용자 요청 범위에서 수행한다.
 - WSL에서 서버를 실행할 때는 WSL에서 `npm ci`를 실행한다. Windows와 WSL의 `node_modules/`는 플랫폼별 바이너리가 달라 공유하지 않는다. 개발 서버는 `/mnt/c`의 파일도 감시할 수 있도록 폴링을 사용한다.

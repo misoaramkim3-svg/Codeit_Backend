@@ -1,39 +1,57 @@
-import fakeServer from "@/fake-server";
+import { authClient } from "@/lib/auth-client";
 import { AppError } from "@/lib/app-error";
-import type { NewUserType } from "@/types";
+import type { LoginRequest, SignupRequest } from "@/types";
 
-export const signUpApi = async (newUser: NewUserType) => {
-  try {
-    return await fakeServer.signUp(newUser);
-  } catch (error) {
-    if (error instanceof AppError && error.type === "SERVER_ERROR") {
-      console.error("회원가입 서버 에러:", error);
-      return;
-    }
-    throw error;
+export async function signUpApi({ email, password, username }: SignupRequest) {
+  const { error } = await authClient.signUp.email({
+    email,
+    password,
+    name: username,
+  });
+  if (
+    error?.code === "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL" ||
+    error?.status === 409
+  ) {
+    throw new AppError("DUPLICATE_EMAIL", "이미 가입된 이메일이에요.");
   }
-};
+  if (error) {
+    throw new AppError("SERVER_ERROR", "회원가입을 완료하지 못했어요.");
+  }
+}
 
-export const loginApi = async (params: { email: string; password: string }) => {
-  try {
-    return await fakeServer.login(params.email, params.password);
-  } catch (error) {
-    if (error instanceof AppError && error.type === "SERVER_ERROR") {
-      console.error("로그인 서버 에러:", error);
-      return;
-    }
-    throw error;
+export async function loginApi({ email, password, username }: LoginRequest) {
+  const { error } = await authClient.signIn.email(
+    { email, password },
+    { headers: { "x-memoit-username": encodeURIComponent(username) } },
+  );
+  if (error?.status === 400 || error?.status === 401) {
+    throw new AppError("LOGIN_FAILED", "로그인 정보가 맞지 않아요.");
   }
-};
+  if (error) {
+    throw new AppError(
+      "SERVER_ERROR",
+      "로그인하지 못했어요. 다시 시도해 주세요.",
+    );
+  }
+}
 
-export const getMeApi = async (token: string) => {
-  try {
-    return await fakeServer.getMe(token);
-  } catch (error) {
-    if (error instanceof AppError && error.type === "SERVER_ERROR") {
-      console.error("내 정보 서버 에러:", error);
-      return null;
-    }
-    throw error;
+export async function loginWithGoogleApi() {
+  const { error } = await authClient.signIn.social({
+    provider: "google",
+    callbackURL: "/memos",
+    errorCallbackURL: "/login",
+  });
+  if (error) {
+    throw new AppError("SERVER_ERROR", "Google 로그인을 시작하지 못했어요.");
   }
-};
+}
+
+export async function logoutApi() {
+  const { error } = await authClient.signOut();
+  if (error) {
+    throw new AppError(
+      "SERVER_ERROR",
+      "로그아웃하지 못했어요. 다시 시도해 주세요.",
+    );
+  }
+}

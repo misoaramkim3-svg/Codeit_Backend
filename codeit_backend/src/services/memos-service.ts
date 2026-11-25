@@ -4,18 +4,19 @@ import type { MemoPageType, MemoResponse, NewMemoType } from "../types";
 
 const MEMOS_PER_PAGE = 15;
 
-export async function listMemos(cursor?: number): Promise<MemoPageType> {
+export async function getMemoPage(cursor?: number): Promise<MemoPageType> {
   // 한 건을 더 읽어서 다음 페이지가 있는지 확인한다.
-  const matchingMemos = await memosRepository.findMemos(
+  const fetchedMemos = await memosRepository.findMemos(
     MEMOS_PER_PAGE + 1,
     cursor,
   );
-  const pageMemos = matchingMemos.slice(0, MEMOS_PER_PAGE);
-  const hasNextPage = matchingMemos.length > MEMOS_PER_PAGE;
+  const pageMemos = fetchedMemos.slice(0, MEMOS_PER_PAGE);
+  const hasNextPage = fetchedMemos.length > MEMOS_PER_PAGE;
+  const nextCursor = hasNextPage ? pageMemos[pageMemos.length - 1].id : null;
 
   return {
     memos: pageMemos.map(toMemoResponse),
-    nextCursor: hasNextPage ? pageMemos[pageMemos.length - 1].id : null,
+    nextCursor,
   };
 }
 
@@ -42,6 +43,11 @@ function toMemoResponse(memo: MemoWithAuthor): MemoResponse {
   return {
     ...fields,
     createdAt: createdAt.toISOString(),
-    username: author.username,
+    username: author.name,
   };
+}
+
+export async function deleteMemo(id: number): Promise<boolean> {
+  const deletedCount = await memosRepository.deleteMemoById(id);
+  return deletedCount > 0;
 }

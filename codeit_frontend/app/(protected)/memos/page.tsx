@@ -4,9 +4,8 @@ import MemoFeatureComponent from "@/components/custom/memo/memo-feature-componen
 import MemoListComponent from "@/components/custom/memo/memo-list-component";
 import MemoListSkeletonComponent from "@/components/custom/memo/memo-list-skeleton-component";
 import { useMemosQuery } from "@/hooks/use-memos-query";
-import { useMeQuery } from "@/hooks/use-me-query";
+import { authClient } from "@/lib/auth-client";
 import { penOf } from "@/lib/pen";
-import { useAuthStore } from "@/store/auth-store";
 import { formatToday } from "@/lib/date";
 import { PenLine } from "lucide-react";
 import Link from "next/link";
@@ -22,8 +21,8 @@ const MemosPage = () => {
     isFetchingNextPage,
   } = useMemosQuery();
 
-  const token = useAuthStore((state) => state.token);
-  const { data: me } = useMeQuery(token);
+  const { data: session } = authClient.useSession();
+  const me = session?.user;
 
   const memos = data?.pages.flatMap((page) => page.memos) ?? [];
 
@@ -56,7 +55,8 @@ const MemosPage = () => {
           <h1 className="diary-title">
             {me && (
               <span className="diary-title-strong">
-                <span className={penOf(me.id).text}>{me.username}</span>님,
+                <span className={penOf(me.id).text}>{me.name}</span>
+                님,
               </span>
             )}
             <span className="diary-title-soft">오늘은 어떤 하루였나요?</span>

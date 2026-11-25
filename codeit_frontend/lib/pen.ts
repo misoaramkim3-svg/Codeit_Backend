@@ -6,4 +6,10 @@ const PENS = [
   { text: "text-pen-violet", bg: "bg-pen-violet" },
 ];
 
-export const penOf = (userId: number) => PENS[Math.abs(userId) % PENS.length];
+export function penOf(userId: string) {
+  let index = 0;
+  for (const character of userId) {
+    index = (index * 31 + character.charCodeAt(0)) % PENS.length;
+  }
+  return PENS[index];
+}

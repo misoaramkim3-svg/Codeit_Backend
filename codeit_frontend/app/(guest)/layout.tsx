@@ -1,16 +1,17 @@
 "use client";
 
 import FooterComponent from "@/components/custom/layout/footer-component";
-import { isLoggedIn, useAuthStore } from "@/store/auth-store";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const GuestLayout = ({ children }: LayoutProps<"/">) => {
   const router = useRouter();
-  const loggedIn = useAuthStore(isLoggedIn);
+  const { data: session } = authClient.useSession();
+  const loggedIn = Boolean(session);
 
   useEffect(() => {
-    if (isLoggedIn(useAuthStore.getState())) {
+    if (loggedIn) {
       router.replace("/memos");
     }
   }, [loggedIn, router]);

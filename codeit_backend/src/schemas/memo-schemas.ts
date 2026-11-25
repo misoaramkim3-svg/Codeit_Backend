@@ -16,7 +16,7 @@ export const memoIdParamsSchema = z.object({
 });
 
 export const createMemoSchema = z.object({
-  userId: z.number().int().positive(),
+  userId: z.string().min(1),
   title: z.string().trim().min(1),
   content: z.string().refine((value) => value.trim().length > 0),
   imageUrl: z.string().default(""),

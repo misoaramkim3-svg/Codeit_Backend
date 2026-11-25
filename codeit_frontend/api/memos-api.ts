@@ -34,3 +34,15 @@ export const createMemoApi = async (
   const { data } = await axios.post<MemoResponse>("/api/memos", request);
   return data;
 };
+
+export const deleteMemoApi = async (id: number): Promise<void> => {
+  try {
+    await axios.delete(`/api/memos/${id}`);
+  } catch (error) {
+    // 이미 지워진 메모도 화면에서는 삭제 완료로 처리한다.
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return;
+    }
+    throw error;
+  }
+};

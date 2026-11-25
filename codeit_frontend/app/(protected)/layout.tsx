@@ -1,18 +1,19 @@
 "use client";
 
-import { isLoggedIn, useAuthStore } from "@/store/auth-store";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const ProtectedLayout = ({ children }: LayoutProps<"/">) => {
   const router = useRouter();
-  const loggedIn = useAuthStore(isLoggedIn);
+  const { data: session, isPending } = authClient.useSession();
+  const loggedIn = Boolean(session);
 
   useEffect(() => {
-    if (!isLoggedIn(useAuthStore.getState())) {
-      router.replace("/");
+    if (!isPending && !loggedIn) {
+      router.replace("/login");
     }
-  }, [loggedIn, router]);
+  }, [isPending, loggedIn, router]);
 
   if (!loggedIn) {
     return null;

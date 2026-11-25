@@ -1,14 +1,15 @@
 "use client";
 
-import { isLoggedIn, useAuthStore } from "@/store/auth-store";
+import { authClient } from "@/lib/auth-client";
 import { CircleUserRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const MyPageButtonComponent = () => {
   const router = useRouter();
+  const { data: session } = authClient.useSession();
 
   const handleClick = () => {
-    if (isLoggedIn(useAuthStore.getState())) {
+    if (session) {
       router.push("/mypage");
     } else {
       router.push("/login");

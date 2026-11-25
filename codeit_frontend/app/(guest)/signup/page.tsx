@@ -18,7 +18,7 @@ const SignupPage = () => {
       { email, password, username },
       {
         onSuccess: () => {
-          router.push("/login");
+          router.push("/login?signup=success");
         },
       },
     );

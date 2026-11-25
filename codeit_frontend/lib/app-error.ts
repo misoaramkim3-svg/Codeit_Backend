@@ -1,5 +1,4 @@
-export type AppErrorType =
-  "SERVER_ERROR" | "DUPLICATE_EMAIL" | "LOGIN_FAILED" | "UNAUTHORIZED";
+export type AppErrorType = "SERVER_ERROR" | "DUPLICATE_EMAIL" | "LOGIN_FAILED";
 
 export class AppError extends Error {
   type: AppErrorType;

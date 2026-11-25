@@ -38,7 +38,9 @@ export const FAKE_USERS: UserType[] = [
   },
 ];
 
-export const FAKE_MEMOS: MemoRecordType[] = [
+export const FAKE_MEMOS: (Omit<MemoRecordType, "userId"> & {
+  userId: number;
+})[] = [
   {
     id: 100,
     userId: 1,

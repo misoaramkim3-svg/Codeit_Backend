@@ -1,16 +1,21 @@
 "use client";
 
+import FormMessageComponent from "@/components/custom/form/form-message-component";
+import { Button } from "@/components/ui/button";
+import { useDeleteMemoMutation } from "@/hooks/use-delete-memo-mutation";
 import { useMemoQuery } from "@/hooks/use-memo-query";
 import MemoImage from "./memo-image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { formatLongDate, parseDiaryDate } from "@/lib/date";
 import { useEffect } from "react";
 import WriterComponent from "./writer-component";
 
 const MemoDetailComponent = () => {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const { data: memo, isLoading, isError } = useMemoQuery(Number(params.id));
+  const deleteMemo = useDeleteMemoMutation();
 
   useEffect(() => {
     if (memo) {
@@ -66,6 +71,16 @@ const MemoDetailComponent = () => {
 
   const date = parseDiaryDate(memo.createdAt);
 
+  const handleDelete = () => {
+    if (!window.confirm("이 메모를 삭제할까요? 삭제하면 복구할 수 없어요.")) {
+      return;
+    }
+
+    deleteMemo.mutate(memo.id, {
+      onSuccess: () => router.replace("/memos"),
+    });
+  };
+
   return (
     <article>
       <Link href="/memos" className="back-link">
@@ -78,11 +93,30 @@ const MemoDetailComponent = () => {
             {formatLongDate(date)} · {date.time}
           </time>
         </p>
-        <h1 className="article-title mt-4">{memo.title}</h1>
+        <div className="mt-4 flex items-start justify-between gap-4">
+          <h1 className="article-title min-w-0 wrap-break-word">
+            {memo.title}
+          </h1>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleteMemo.isPending}
+          >
+            {deleteMemo.isPending ? "삭제 중..." : "삭제"}
+          </Button>
+        </div>
         <p className="meta mt-4">
           <WriterComponent userId={memo.userId} username={memo.username} />의
           메모
         </p>
+        {deleteMemo.isError && (
+          <FormMessageComponent
+            urgent
+            className="mt-3"
+            message="메모를 삭제하지 못했어요. 다시 시도해 주세요."
+          />
+        )}
       </header>
 
       <div className="article-image">

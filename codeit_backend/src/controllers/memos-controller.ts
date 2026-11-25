@@ -15,7 +15,7 @@ export async function listMemos(req: Request, res: Response) {
     return;
   }
 
-  const page = await memosService.listMemos(query.data.cursor);
+  const page = await memosService.getMemoPage(query.data.cursor);
   res.json(page);
 }
 
@@ -48,6 +48,17 @@ export async function createMemo(req: Request, res: Response) {
     return;
   }
 
+  const { getBetterAuthUserId } = await import("../lib/better-auth.mjs");
+  const authorId = await getBetterAuthUserId(req.headers);
+  if (!authorId) {
+    res.status(401).json({ message: "로그인이 필요합니다." });
+    return;
+  }
+  if (authorId !== body.data.userId) {
+    res.status(403).json({ message: "로그인한 사용자로 메모를 작성하세요." });
+    return;
+  }
+
   const memo = await memosService.createMemo(body.data);
   if (!memo) {
     res.status(400).json({ message: INVALID_USER_MESSAGE });
@@ -55,4 +66,20 @@ export async function createMemo(req: Request, res: Response) {
   }
 
   res.location(`/memos/${memo.id}`).status(201).json(memo);
+}
+
+export async function deleteMemo(req: Request, res: Response) {
+  const params = memoIdParamsSchema.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ message: "메모 ID는 양의 정수여야 합니다." });
+    return;
+  }
+
+  const deleted = await memosService.deleteMemo(params.data.id);
+  if (!deleted) {
+    res.status(404).json({ message: "메모를 찾을 수 없습니다." });
+    return;
+  }
+
+  res.status(204).end();
 }

@@ -13,7 +13,10 @@ export const passwordSchema = z
 export const signUpSchema = z
   .object({
     email: emailSchema,
-    password: passwordSchema,
+    password: passwordSchema.refine(
+      (password) => new TextEncoder().encode(password).byteLength <= 72,
+      "비밀번호는 72바이트 이하여야 해요.",
+    ),
     passwordConfirm: z.string(),
     username: z
       .string()

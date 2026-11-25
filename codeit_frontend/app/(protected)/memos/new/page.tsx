@@ -2,15 +2,14 @@
 
 import MemoFormComponent from "@/components/custom/memo/memo-form-component";
 import { useCreateMemoMutation } from "@/hooks/use-create-memo-mutation";
-import { useMeQuery } from "@/hooks/use-me-query";
-import { useAuthStore } from "@/store/auth-store";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
 const NewMemoPage = () => {
   const { mutate, isPending, isError } = useCreateMemoMutation();
   const router = useRouter();
-  const token = useAuthStore((state) => state.token);
-  const { data: me, isLoading } = useMeQuery(token);
+  const { data: session, isPending: isLoading } = authClient.useSession();
+  const me = session?.user;
 
   const createMemo = (title: string, content: string, imageUrl: string) => {
     if (!me) {

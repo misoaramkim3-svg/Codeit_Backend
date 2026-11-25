@@ -9,13 +9,12 @@ export type UserType = {
   createdAt: string;
 };
 
-export type NewUserType = Omit<UserType, "id" | "createdAt">;
-export type PublicUserType = Omit<UserType, "password">;
-export type LoginResultType = { token: string };
+export type SignupRequest = Pick<UserType, "email" | "password" | "username">;
+export type LoginRequest = SignupRequest;
 
 export type MemoRecordType = {
   id: number;
-  userId: number;
+  userId: string;
   title: string;
   content: string;
   imageUrl: string;

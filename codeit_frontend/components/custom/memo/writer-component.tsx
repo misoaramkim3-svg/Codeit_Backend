@@ -1,7 +1,7 @@
 import { penOf } from "@/lib/pen";
 
 const WriterComponent = (props: {
-  userId: number;
+  userId: string;
   username: string;
   onDark?: boolean;
 }) => {
