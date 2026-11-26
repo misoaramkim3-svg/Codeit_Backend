@@ -11,10 +11,15 @@ export type MemoWithAuthor = Prisma.MemoGetPayload<{
 // PostgreSQL의 Int 열이 받을 수 있는 최대 ID다.
 const MAX_MEMO_ID = 2_147_483_647;
 
-export function findMemos(limit: number, cursor?: number) {
+export function findMemos(limit: number, cursor?: number, authorName?: string) {
+  const where: Prisma.MemoWhereInput = {};
   // 다음 페이지는 직전 페이지의 마지막 ID보다 작은 메모부터 조회한다.
-  const where =
-    cursor !== undefined && cursor <= MAX_MEMO_ID ? { id: { lt: cursor } } : {};
+  if (cursor !== undefined && cursor <= MAX_MEMO_ID) {
+    where.id = { lt: cursor };
+  }
+  if (authorName) {
+    where.author = { is: { name: authorName } };
+  }
 
   return prisma.memo.findMany({
     where,
@@ -47,6 +52,24 @@ export function insertMemo(input: NewMemoType) {
     data: input,
     include: authorSelection,
   });
+}
+
+export async function findCommentsByMemoId(memoId: number) {
+  if (memoId > MAX_MEMO_ID) {
+    return null;
+  }
+
+  const memo = await prisma.memo.findUnique({
+    where: { id: memoId },
+    select: {
+      comments: {
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        include: authorSelection,
+      },
+    },
+  });
+
+  return memo?.comments ?? null;
 }
 
 export async function insertComment(

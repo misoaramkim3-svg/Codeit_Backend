@@ -4,6 +4,7 @@ import {
   createMemo,
   deleteMemo,
   getMemo,
+  listComments,
   listMemos,
 } from "../controllers/memos-controller";
 import { requireLogin } from "../middlewares/require-login";
@@ -15,6 +16,7 @@ memosRouter.use(requireLogin);
 
 memosRouter.get("/", listMemos);
 memosRouter.get("/:id", getMemo);
+memosRouter.get("/:id/comments", listComments);
 memosRouter.post("/", createMemo);
 memosRouter.post("/:id/comments", createComment);
 memosRouter.delete("/:id", deleteMemo);

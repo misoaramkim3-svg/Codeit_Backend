@@ -13,11 +13,18 @@ const INVALID_USER_MESSAGE = "존재하는 사용자의 userId가 필요합니�
 export async function listMemos(req: Request, res: Response) {
   const query = memoListQuerySchema.safeParse(req.query);
   if (!query.success) {
-    res.status(400).json({ message: "커서는 양의 정수여야 합니다." });
+    const invalidAuthor = query.error.issues.some(
+      (issue) => issue.path[0] === "authorName",
+    );
+    const message = invalidAuthor
+      ? "작성자 이름은 하나만 입력하세요."
+      : "커서는 양의 정수여야 합니다.";
+    res.status(400).json({ message });
     return;
   }
 
-  const page = await memosService.getMemoPage(query.data.cursor);
+  const { cursor, authorName } = query.data;
+  const page = await memosService.getMemoPage(cursor, authorName);
   res.json(page);
 }
 
@@ -65,6 +72,22 @@ export async function createMemo(
   }
 
   res.location(`/memos/${memo.id}`).status(201).json(memo);
+}
+
+export async function listComments(req: Request, res: Response) {
+  const params = memoIdParamsSchema.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ message: "메모 ID는 양의 정수여야 합니다." });
+    return;
+  }
+
+  const comments = await memosService.getMemoComments(params.data.id);
+  if (!comments) {
+    res.status(404).json({ message: "메모를 찾을 수 없습니다." });
+    return;
+  }
+
+  res.json(comments);
 }
 
 export async function createComment(

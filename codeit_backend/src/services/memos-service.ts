@@ -1,14 +1,23 @@
 import * as memosRepository from "../repositories/memos-repository";
 import type { MemoWithAuthor } from "../repositories/memos-repository";
-import type { MemoPageType, MemoResponse, NewMemoType } from "../types";
+import type {
+  CommentResponse,
+  MemoPageType,
+  MemoResponse,
+  NewMemoType,
+} from "../types";
 
 const MEMOS_PER_PAGE = 15;
 
-export async function getMemoPage(cursor?: number): Promise<MemoPageType> {
+export async function getMemoPage(
+  cursor?: number,
+  authorName?: string,
+): Promise<MemoPageType> {
   // 한 건을 더 읽어서 다음 페이지가 있는지 확인한다.
   const fetchedMemos = await memosRepository.findMemos(
     MEMOS_PER_PAGE + 1,
     cursor,
+    authorName,
   );
   const pageMemos = fetchedMemos.slice(0, MEMOS_PER_PAGE);
   const hasNextPage = fetchedMemos.length > MEMOS_PER_PAGE;
@@ -36,6 +45,21 @@ export async function createMemo(
 
   const memo = await memosRepository.insertMemo(input);
   return toMemoResponse(memo);
+}
+
+export async function getMemoComments(
+  memoId: number,
+): Promise<CommentResponse[] | null> {
+  const comments = await memosRepository.findCommentsByMemoId(memoId);
+  if (!comments) {
+    return null;
+  }
+
+  return comments.map(({ author, createdAt, ...fields }) => ({
+    ...fields,
+    username: author.name,
+    createdAt: createdAt.toISOString(),
+  }));
 }
 
 export async function createComment(

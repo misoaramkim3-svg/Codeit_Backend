@@ -9,6 +9,7 @@ const positiveIntegerFromString = z
 
 export const memoListQuerySchema = z.object({
   cursor: positiveIntegerFromString.optional(),
+  authorName: z.string().trim().optional(),
 });
 
 export const memoIdParamsSchema = z.object({

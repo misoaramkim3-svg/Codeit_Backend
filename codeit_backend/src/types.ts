@@ -29,6 +29,15 @@ export type CreateMemoRequest = z.input<typeof createMemoSchema>;
 
 export type CreateCommentRequest = z.input<typeof createCommentSchema>;
 
+export type CommentResponse = {
+  id: string;
+  memoId: number;
+  userId: string;
+  username: string;
+  content: string;
+  createdAt: string;
+};
+
 // 메모 API의 createdAt은 UTC ISO 8601 문자열이다. 화면에서 표시할 시간대로 바꾼다.
 export type MemoResponse = MemoRecordType & {
   username: string;

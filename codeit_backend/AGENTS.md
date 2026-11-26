@@ -25,12 +25,13 @@
 - `npm run typecheck`로 타입을 검사하고 `npm run build`로 TypeScript를 `dist/`에 컴파일한다. 현재 `npm test`는 자리표시자다. 서버 동작을 바꿨다면 영향받은 HTTP 응답도 확인한다.
 - `src/index.ts`에서 요청 로그, CORS, JSON 파싱을 라우터보다 먼저 등록한다. CORS는 `http://localhost:3000`에서 백엔드를 직접 호출하는 브라우저 요청을 허용한다.
 - 메모 목록·상세·생성·삭제 라우트는 `src/routes/memos-router.ts`에 정의하고, `src/index.ts`에서 `/memos` 경로에 연결한다. 공통 미들웨어 `requireLogin`이 Better Auth 세션을 검사하며, 유효한 세션이 없으면 `401`을 반환한다.
-- `GET /memos`는 작성자 이름이 포함된 메모를 최대 15개씩 `{ memos, nextCursor }`로 반환한다. `cursor`를 생략하면 첫 페이지를 반환하고, 다음 페이지는 `cursor`에 이전 응답의 `nextCursor`를 전달한다.
+- `GET /memos`는 작성자 이름이 포함된 메모를 최대 15개씩 `{ memos, nextCursor }`로 반환한다. `authorName`을 전달하면 양쪽 공백을 제거한 이름과 정확히 일치하는 작성자의 메모를 반환한다. `cursor`를 생략하면 첫 페이지를 반환하고, 다음 페이지는 같은 작성자 이름과 이전 응답의 `nextCursor`를 전달한다.
 - API 타입은 `src/types.ts` 한 곳에서 정의한다. 프론트엔드의 `@/types`도 이 파일을 가리킨다.
 - 회원가입은 `POST /auth/signup`, 로그인은 `POST /auth/login`으로 요청한다. 새 비밀번호는 UTF-8 기준 최대 72바이트를 허용하고 `bcrypt`로 해시해 PostgreSQL에 저장한다. 기존 `scrypt` 계정은 로그인에 성공하면 72바이트 이하인 비밀번호를 bcrypt 해시로 갱신한다.
 - `POST /auth/login`은 이메일, 비밀번호, 가입 시 등록한 유저이름(`username`)을 받는다.
 - 메모 API의 `createdAt`은 UTC ISO 8601 문자열로 보낸다. 시드는 시간대 없는 실습용 날짜를 한국 시각으로 해석하고, 프론트엔드는 한국 시간으로 날짜와 시각을 표시한다.
 - `GET /memos/:id`는 ID에 해당하는 메모와 작성자 이름(`username`)을 JSON 객체로 반환한다. 잘못된 ID는 `400`, 존재하지 않는 ID는 `404`로 응답한다.
+- `GET /memos/:id/comments`는 해당 메모의 댓글과 작성자 이름을 작성순으로 반환한다. 댓글이 없으면 빈 배열을 반환하고, 메모가 없으면 `404`로 응답한다.
 - `POST /memos/:id/comments`는 로그인한 사용자 ID로 댓글을 저장한다. 본문은 `{ content }`이며 공백을 제거한 뒤 1~1,000자를 받는다. 성공은 `201`, 잘못된 입력은 `400`, 세션 없음은 `401`, 연결할 메모나 작성자가 없으면 `404`다. 메모를 삭제하면 해당 댓글도 삭제된다.
 - 기존 로컬 DB에 예시 댓글만 추가하려면 `npm run db:seed -- -- --comments-only`를 실행한다.
 - `DELETE /memos/:id`는 지정한 메모 한 건을 PostgreSQL에서 삭제한다. 성공은 `204`, 잘못된 ID는 `400`, 존재하지 않는 메모는 `404`로 응답한다. 이 API는 로컬 CRUD 실습용으로 모든 메모에 적용된다. 프론트엔드와 백엔드 개발 서버는 `127.0.0.1`에 바인딩한다.

@@ -3,15 +3,18 @@
 import MemoFeatureComponent from "@/components/custom/memo/memo-feature-component";
 import MemoListComponent from "@/components/custom/memo/memo-list-component";
 import MemoListSkeletonComponent from "@/components/custom/memo/memo-list-skeleton-component";
+import { Input } from "@/components/ui/input";
 import { useMemosQuery } from "@/hooks/use-memos-query";
 import { authClient } from "@/lib/auth-client";
 import { penOf } from "@/lib/pen";
 import { formatToday } from "@/lib/date";
 import { PenLine } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 const MemosPage = () => {
+  const [authorInput, setAuthorInput] = useState("");
+  const [authorName, setAuthorName] = useState("");
   const {
     data,
     isLoading,
@@ -19,7 +22,7 @@ const MemosPage = () => {
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useMemosQuery();
+  } = useMemosQuery(authorName);
 
   const { data: session } = authClient.useSession();
   const me = session?.user;
@@ -45,7 +48,17 @@ const MemosPage = () => {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [authorName, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  function searchByAuthor(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAuthorName(authorInput.trim());
+  }
+
+  function clearAuthorSearch() {
+    setAuthorInput("");
+    setAuthorName("");
+  }
 
   return (
     <main className="page flex-1">
@@ -74,6 +87,38 @@ const MemosPage = () => {
         </Link>
       </header>
 
+      <form role="search" onSubmit={searchByAuthor} className="mb-8 max-w-lg">
+        <label htmlFor="memo-author" className="mb-2 block text-sm font-medium">
+          작성자 이름
+        </label>
+        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+          <Input
+            id="memo-author"
+            type="text"
+            value={authorInput}
+            onChange={(event) => setAuthorInput(event.target.value)}
+            className="w-full sm:flex-1"
+          />
+          <button type="submit" className="btn-primary shrink-0">
+            검색
+          </button>
+          {(authorInput || authorName) && (
+            <button
+              type="button"
+              onClick={clearAuthorSearch}
+              className="btn-secondary shrink-0"
+            >
+              전체 보기
+            </button>
+          )}
+        </div>
+        {authorName && (
+          <p role="status" className="mt-3 text-sm text-ink-sub wrap-anywhere">
+            {authorName} 님의 메모
+          </p>
+        )}
+      </form>
+
       {isLoading === true ? (
         <MemoListSkeletonComponent></MemoListSkeletonComponent>
       ) : isError === true ? (
@@ -81,6 +126,8 @@ const MemosPage = () => {
           <p className="status-title">메모를 불러오지 못했어요</p>
           <p className="status-desc">잠시 후 페이지를 새로 고침해 주세요.</p>
         </div>
+      ) : authorName && memos.length === 0 ? (
+        <p className="empty">이 이름으로 작성한 메모가 없어요.</p>
       ) : (
         <>
           <MemoFeatureComponent memos={memos.slice(0, 5)} />
