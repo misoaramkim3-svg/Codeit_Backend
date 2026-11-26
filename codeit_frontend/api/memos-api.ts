@@ -1,5 +1,6 @@
 import axios from "axios";
 import type {
+  CreateCommentRequest,
   CreateMemoRequest,
   MemoPageType,
   MemoResponse,
@@ -33,6 +34,13 @@ export const createMemoApi = async (
   // 서버가 응답한 메모의 id를 작성 화면에서 상세 페이지로 이동할 때 사용한다.
   const { data } = await axios.post<MemoResponse>("/api/memos", request);
   return data;
+};
+
+export const createCommentApi = async (
+  memoId: number,
+  request: CreateCommentRequest,
+): Promise<void> => {
+  await axios.post(`/api/memos/${memoId}/comments`, request);
 };
 
 export const deleteMemoApi = async (id: number): Promise<void> => {

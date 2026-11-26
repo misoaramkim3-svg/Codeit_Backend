@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { formatLongDate, parseDiaryDate } from "@/lib/date";
 import { useEffect } from "react";
+import CommentFormComponent from "./comment-form-component";
 import WriterComponent from "./writer-component";
 
 const MemoDetailComponent = () => {
@@ -137,6 +138,7 @@ const MemoDetailComponent = () => {
             <p key={i}>{paragraph}</p>
           ))}
       </div>
+      <CommentFormComponent key={memo.id} memoId={memo.id} />
     </article>
   );
 };

@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
+import type { LoginLocals } from "../middlewares/require-login";
 import {
+  createCommentSchema,
   createMemoSchema,
   memoIdParamsSchema,
   memoListQuerySchema,
@@ -35,7 +37,10 @@ export async function getMemo(req: Request, res: Response) {
   res.json(memo);
 }
 
-export async function createMemo(req: Request, res: Response) {
+export async function createMemo(
+  req: Request,
+  res: Response<unknown, LoginLocals>,
+) {
   const body = createMemoSchema.safeParse(req.body ?? {});
   if (!body.success) {
     const hasInvalidUserId = body.error.issues.some(
@@ -48,13 +53,7 @@ export async function createMemo(req: Request, res: Response) {
     return;
   }
 
-  const { getBetterAuthUserId } = await import("../lib/better-auth.mjs");
-  const authorId = await getBetterAuthUserId(req.headers);
-  if (!authorId) {
-    res.status(401).json({ message: "로그인이 필요합니다." });
-    return;
-  }
-  if (authorId !== body.data.userId) {
+  if (res.locals.userId !== body.data.userId) {
     res.status(403).json({ message: "로그인한 사용자로 메모를 작성하세요." });
     return;
   }
@@ -66,6 +65,37 @@ export async function createMemo(req: Request, res: Response) {
   }
 
   res.location(`/memos/${memo.id}`).status(201).json(memo);
+}
+
+export async function createComment(
+  req: Request,
+  res: Response<unknown, LoginLocals>,
+) {
+  const params = memoIdParamsSchema.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ message: "메모 ID는 양의 정수여야 합니다." });
+    return;
+  }
+
+  const body = createCommentSchema.safeParse(req.body);
+  if (!body.success) {
+    res
+      .status(400)
+      .json({ message: "댓글은 1자 이상 1,000자 이하로 입력하세요." });
+    return;
+  }
+
+  const comment = await memosService.createComment(
+    params.data.id,
+    res.locals.userId,
+    body.data.content,
+  );
+  if (!comment) {
+    res.status(404).json({ message: "메모 또는 작성자를 찾을 수 없습니다." });
+    return;
+  }
+
+  res.status(201).json(comment);
 }
 
 export async function deleteMemo(req: Request, res: Response) {

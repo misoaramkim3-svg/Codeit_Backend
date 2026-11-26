@@ -1,5 +1,5 @@
 import { prisma } from "../db/prisma";
-import type { Prisma } from "../generated/prisma/client";
+import { Prisma } from "../generated/prisma/client";
 import type { NewMemoType } from "../types";
 
 const authorSelection = { author: { select: { name: true } } } as const;
@@ -47,6 +47,35 @@ export function insertMemo(input: NewMemoType) {
     data: input,
     include: authorSelection,
   });
+}
+
+export async function insertComment(
+  memoId: number,
+  userId: string,
+  content: string,
+) {
+  if (memoId > MAX_MEMO_ID) {
+    return null;
+  }
+
+  try {
+    return await prisma.comment.create({
+      data: {
+        content,
+        memo: { connect: { id: memoId } },
+        author: { connect: { id: userId } },
+      },
+    });
+  } catch (error) {
+    // 댓글을 저장하는 시점에 메모나 작성자가 사라진 경우다.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function deleteMemoById(id: number): Promise<number> {

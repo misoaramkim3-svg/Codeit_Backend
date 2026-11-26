@@ -17,7 +17,21 @@ model Memo {
   imageUrl  String         @default("")
   createdAt DateTime       @default(now()) @db.Timestamptz(3)
   author    BetterAuthUser @relation(fields: [userId], references: [id])
+  comments  Comment[]
 
+  @@index([userId])
+}
+
+model Comment {
+  id        String         @id @default(uuid())
+  memoId    Int
+  userId    String
+  content   String
+  createdAt DateTime       @default(now()) @db.Timestamptz(3)
+  memo      Memo           @relation(fields: [memoId], references: [id], onDelete: Cascade)
+  author    BetterAuthUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([memoId])
   @@index([userId])
 }
 
@@ -30,6 +44,7 @@ model BetterAuthUser {
   createdAt     DateTime            @default(now()) @db.Timestamptz(3)
   updatedAt     DateTime            @updatedAt @db.Timestamptz(3)
   memos         Memo[]
+  comments      Comment[]
   sessions      BetterAuthSession[]
   accounts      BetterAuthAccount[]
 }

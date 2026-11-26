@@ -38,6 +38,19 @@ export async function createMemo(
   return toMemoResponse(memo);
 }
 
+export async function createComment(
+  memoId: number,
+  userId: string,
+  content: string,
+) {
+  const comment = await memosRepository.insertComment(memoId, userId, content);
+  if (!comment) {
+    return undefined;
+  }
+
+  return { ...comment, createdAt: comment.createdAt.toISOString() };
+}
+
 function toMemoResponse(memo: MemoWithAuthor): MemoResponse {
   const { author, createdAt, ...fields } = memo;
   return {

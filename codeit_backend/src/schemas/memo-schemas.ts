@@ -21,3 +21,7 @@ export const createMemoSchema = z.object({
   content: z.string().refine((value) => value.trim().length > 0),
   imageUrl: z.string().default(""),
 });
+
+export const createCommentSchema = z.object({
+  content: z.string().trim().min(1).max(1000),
+});

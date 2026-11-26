@@ -1,5 +1,8 @@
 import type { z } from "zod";
-import type { createMemoSchema } from "./schemas/memo-schemas";
+import type {
+  createCommentSchema,
+  createMemoSchema,
+} from "./schemas/memo-schemas";
 
 export type UserType = {
   id: number;
@@ -23,6 +26,8 @@ export type MemoRecordType = {
 
 // 클라이언트가 보내기 전의 입력 타입이므로 imageUrl은 생략할 수 있다.
 export type CreateMemoRequest = z.input<typeof createMemoSchema>;
+
+export type CreateCommentRequest = z.input<typeof createCommentSchema>;
 
 // 메모 API의 createdAt은 UTC ISO 8601 문자열이다. 화면에서 표시할 시간대로 바꾼다.
 export type MemoResponse = MemoRecordType & {

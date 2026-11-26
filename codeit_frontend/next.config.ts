@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
       { source: "/api/memos", destination: `${backendUrl}/memos` },
       { source: "/api/memos/:id", destination: `${backendUrl}/memos/:id` },
       {
+        source: "/api/memos/:id/comments",
+        destination: `${backendUrl}/memos/:id/comments`,
+      },
+      {
         source: "/api/better-auth/:path*",
         destination: `${backendUrl}/api/better-auth/:path*`,
       },
